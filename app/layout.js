@@ -1,14 +1,15 @@
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Saira, JetBrains_Mono } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
-// ─── Fonts ───────────────────────────────────────────────────────────────────
-const geistSans = Geist({
+// ─── Premium Fonts (Tech & AI Focused) ───────────────────────────────────────
+const saira = Saira({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
 });
-const geistMono = Geist_Mono({
+
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-mono',
@@ -186,10 +187,10 @@ export default function RootLayout({ children }) {
   return (
     <html 
       lang="en" 
-      className={`${geistSans.variable} ${geistMono.variable}`} 
+      className={`${saira.variable} ${jetbrainsMono.variable}`} 
       suppressHydrationWarning
     >
-      <body className={`${geistSans.className} antialiased font-sans`}>
+      <body className={`${saira.className} antialiased font-sans`}>
         
         {/* Inject JSON-LD Schema */}
         {jsonLd.map((schema, i) => (
