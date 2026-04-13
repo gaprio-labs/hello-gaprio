@@ -1,15 +1,30 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image"; 
 import { ThemeToggle } from "@/components/theme-toggle"; 
-import { ArrowRight, Calendar, Layers, Workflow, ArrowUp, ExternalLink } from "lucide-react";
+import { ArrowRight, ArrowUp, Calendar, ExternalLink, Layers, Mail, X } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ReactLenis } from "lenis/react";
+import { motion, useSpring } from "framer-motion";
+import { BsInstagram, BsLinkedin } from "react-icons/bs";
+
 gsap.registerPlugin(ScrollTrigger);
 
-// Cleaned up: No borders, no shadows, no captions. Just the raw image.
+// --- DATA ---
+const heroTools = [
+  { id: 'asana', label: 'Asana', image: '/companylogo/asana.png', x: 1, y: -200, mobileX: 0, mobileY: -130, color: '#ea580c' },
+  { id: 'jira', label: 'Jira', image: '/companylogo/jira.png', x: 180, y: -140, mobileX: 100, mobileY: -90, color: '#d97706' },
+  { id: 'ms365', label: 'MS 365', image: '/companylogo/microsoft.webp', x: 280, y: 0, mobileX: 140, mobileY: 0, color: '#2563eb' },
+  { id: 'clickup', label: 'ClickUp', image: '/companylogo/clickup.png', x: 180, y: 140, mobileX: 100, mobileY: 90, color: '#7c3aed' },
+  { id: 'zoho', label: 'Zoho', image: '/companylogo/zoho.png', x: -1, y: 200, mobileX: 0, mobileY: 130, color: '#ef4444' },
+  { id: 'google', label: 'Google', image: '/companylogo/google.webp', x: -180, y: 140, mobileX: -100, mobileY: 90, color: '#dc2626' },
+  { id: 'slack', label: 'Slack', image: '/companylogo/slack.png', x: -280, y: 0, mobileX: -140, mobileY: 0, color: '#f97316' },
+  { id: 'miro', label: 'Miro', image: '/companylogo/miro.png', x: -180, y: -140, mobileX: -100, mobileY: -90, color: '#fbbf24' },
+];
+
+// --- COMPONENTS ---
 function ImagePlaceholder({ src, alt = "Gaprio Visualization" }) {
   return (
     <div className="my-10 sm:my-14 flex flex-col items-center w-full scroll-reveal">
@@ -34,8 +49,102 @@ function ImagePlaceholder({ src, alt = "Gaprio Visualization" }) {
   );
 }
 
+// --- DRAGGABLE NODE ---
+function DraggableNode({ tool, containerRef, isMobile }) {
+  const initialX = isMobile ? tool.mobileX : tool.x;
+  const initialY = isMobile ? tool.mobileY : tool.y;
+
+  const x = useSpring(initialX, { stiffness: 120, damping: 20 });
+  const y = useSpring(initialY, { stiffness: 120, damping: 20 });
+  const [pos, setPos] = useState({ x: initialX, y: initialY });
+
+  useEffect(() => {
+    x.set(isMobile ? tool.mobileX : tool.x);
+    y.set(isMobile ? tool.mobileY : tool.y);
+  }, [isMobile, tool.x, tool.y, tool.mobileX, tool.mobileY, x, y]);
+
+  useEffect(() => {
+    const unsubX = x.on("change", (v) => setPos((p) => ({ ...p, x: v })));
+    const unsubY = y.on("change", (v) => setPos((p) => ({ ...p, y: v })));
+    return () => {
+      unsubX();
+      unsubY();
+    };
+  }, [x, y]);
+
+  const midX = pos.x / 2;
+  const midY = pos.y / 2 + (isMobile ? 30 : 60);
+  const gradientId = `gradient-${tool.id}`;
+
+  return (
+    <>
+      <svg
+        className="absolute top-1/2 left-1/2 overflow-visible pointer-events-none"
+        style={{ zIndex: 10 }}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="currentColor" className="text-zinc-200 dark:text-zinc-800" stopOpacity="0.5" />
+            <stop offset="100%" stopColor={tool.color} stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+        <motion.path
+          d={`M 0 0 Q ${midX} ${midY} ${pos.x} ${pos.y}`}
+          stroke={`url(#${gradientId})`}
+          strokeWidth={isMobile ? "2" : "3"}
+          strokeLinecap="round"
+          fill="none"
+          className="opacity-60 transition-opacity duration-300"
+        />
+      </svg>
+
+      <motion.div
+        drag
+        dragConstraints={containerRef}
+        dragElastic={0.1}
+        dragMomentum={false}
+        style={{ x, y }}
+        whileHover={{ cursor: "grab" }}
+        whileDrag={{ scale: 1.15, cursor: "grabbing", zIndex: 100 }}
+        className="group absolute w-[68px] h-[68px] md:w-24 md:h-24 bg-white dark:bg-[#121212] rounded-2xl md:rounded-3xl flex flex-col items-center justify-center shadow-lg dark:shadow-2xl z-20 border border-zinc-200 dark:border-white/10 backdrop-blur-md touch-none select-none overflow-visible"
+      >
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
+          <div className="relative w-7 h-7 md:w-10 md:h-10 mb-1 md:mb-2 pointer-events-none select-none">
+            <Image
+              src={tool.image}
+              alt={tool.label}
+              fill
+              draggable={false}
+              className="object-contain"
+            />
+          </div>
+          <span className="text-[9px] md:text-[11px] text-zinc-400 font-bold uppercase tracking-wider pointer-events-none select-none transition-colors group-hover:text-zinc-800 dark:group-hover:text-white">
+            {tool.label}
+          </span>
+        </div>
+
+        <div className="absolute inset-0 rounded-2xl md:rounded-3xl bg-gradient-to-tr from-black/5 dark:from-white/5 to-transparent pointer-events-none" />
+        <div
+          className="absolute inset-0 rounded-2xl md:rounded-3xl border border-transparent group-hover:border-[currentColor] transition-colors duration-300 pointer-events-none"
+          style={{ borderColor: tool.color + "40", color: tool.color }}
+        />
+      </motion.div>
+    </>
+  );
+}
+
+// --- MAIN PAGE ---
 export default function Home() {
   const containerRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile(); 
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -74,10 +183,10 @@ export default function Home() {
         className="relative min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] text-zinc-800 dark:text-zinc-300 selection:bg-[#FC8B32]/20 overflow-hidden font-sans"
       >
         
-        {/* ABSOLUTE GRADIENT: Scrolls away naturally with the page */}
+        {/* ABSOLUTE GRADIENT */}
         <div className="absolute top-[-5%] right-[-10%] w-full max-w-[900px] h-[800px] bg-gradient-to-bl from-[#ff5e00] via-[#FC8B32]/60 to-transparent blur-[120px] rounded-full pointer-events-none z-0" />
         
-        {/* HEADER WRAPPER: Absolute positioning so BOTH Logo and Theme Toggle scroll away naturally */}
+        {/* HEADER WRAPPER */}
         <div className="absolute top-0 left-0 w-full z-50 pt-8 sm:pt-10 pointer-events-none">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 flex justify-between items-center">
             {/* Logo */}
@@ -214,10 +323,49 @@ export default function Home() {
               </p>
             </div>
 
-            <ImagePlaceholder 
-              src="/img0002.png" 
-              alt="Workplace tools silos"
-            />
+            {/* REAL INTERACTIVE MAP REPLACING THE IMAGE */}
+            <div className="my-10 sm:my-14 scroll-reveal">
+              <div
+                ref={mapContainerRef}
+                className="relative w-full h-[400px] md:h-[550px] flex items-center justify-center z-20 cursor-crosshair touch-none select-none rounded-3xl bg-zinc-100 dark:bg-[#0e0e0e] border border-zinc-200 dark:border-zinc-800/60 overflow-hidden shadow-inner"
+              >
+                {/* Central Hub */}
+                <div className="relative z-30 flex items-center justify-center pointer-events-none">
+                  <div className="absolute w-28 h-28 md:w-40 md:h-40 bg-orange-500/20 blur-[40px] md:blur-[60px] rounded-full animate-pulse" />
+                  
+                  <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white dark:bg-[#0a0a0a] rounded-full border border-zinc-200 dark:border-zinc-800 shadow-[0_0_50px_-10px_rgba(252,139,50,0.3)] flex items-center justify-center ring-1 ring-zinc-100 dark:ring-white/10">
+                    <div className="absolute inset-0 rounded-full border border-orange-500/30 animate-[ping_3s_linear_infinite]" />
+                    <div className="absolute inset-2 md:inset-4 rounded-full border border-orange-500/20 animate-[ping_3s_linear_infinite_1s]" />
+                    
+                    <div className="relative w-10 h-10 md:w-14 md:h-14">
+                      {/* Logo changes automatically by overriding via tailwind classes */}
+                      <Image
+                        src="/logo03.png"
+                        alt="Gaprio"
+                        fill
+                        className="object-contain block dark:hidden"
+                      />
+                      <Image
+                        src="/logo1.png"
+                        alt="Gaprio"
+                        fill
+                        className="object-contain hidden dark:block"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Render Interactive Nodes */}
+                {heroTools.map((tool) => (
+                  <DraggableNode
+                    key={tool.id}
+                    tool={tool}
+                    containerRef={mapContainerRef}
+                    isMobile={isMobile}
+                  />
+                ))}
+              </div>
+            </div>
 
             <div className="scroll-reveal">
               <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-4 mt-8">The Idea</h2>
@@ -227,7 +375,6 @@ export default function Home() {
               
               <div className="relative overflow-hidden p-6 sm:p-8 rounded-2xl bg-white/50 dark:bg-zinc-900/20 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 my-10">
                 <div className="absolute top-0 left-0 w-1 h-full bg-[#FC8B32]"></div>
-                {/* <Workflow className="w-6 h-6 text-[#FC8B32] mb-4" /> */}
                 <p className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white">
                   Not a chatbot. Not a dashboard. Not an integration platform. Gaprio acts as a very sharp colleague, an interactive neural mesh, that reads conversations, attends meetings, and always knows exactly what needs to happen next.
                 </p>
@@ -322,7 +469,7 @@ export default function Home() {
 
           </section>
 
-          {/* NAKED CTA SECTION: Buttons updated for a crisp, solid look without shadows/blur */}
+          {/* NAKED CTA SECTION */}
           <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-20 sm:mt-24 scroll-reveal text-center relative z-10">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-4">
               What We're Asking
@@ -334,6 +481,8 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <a 
                 href="https://calendly.com/gaprio-management/30min" 
+                target="_blank" 
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#FC8B32] text-white px-8 py-3.5 rounded-xl text-base font-semibold hover:bg-[#e07a2a] transition-colors cursor-pointer"
               >
                 <Calendar className="w-5 h-5" />
@@ -341,6 +490,8 @@ export default function Home() {
               </a>
               <a 
                 href="https://www.gaprio.in/waitlist" 
+                target="_blank" 
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-transparent text-zinc-900 dark:text-white px-8 py-3.5 rounded-xl text-base font-semibold border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Join the Waitlist
@@ -355,6 +506,7 @@ export default function Home() {
             <p className="italic max-w-lg mx-auto leading-relaxed text-[13px] sm:text-sm">
               Gaprio is being built by a small team that believes the next decade of enterprise software won't be about better tools. It will be about the intelligence layer that finally makes every tool work together. We're building that layer.
             </p>
+            
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-zinc-900 dark:text-zinc-300 font-medium">
               <span>Hanu Shashwat</span>
               <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
@@ -362,10 +514,28 @@ export default function Home() {
               <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
               <span>Abhijeet</span>
             </div>
+            
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#FC8B32]"></span>
-              <a href="https://gaprio.in" className="hover:text-[#FC8B32] text-zinc-900 dark:text-white font-semibold transition-colors">gaprio.in</a>
+              <a href="https://gaprio.in" target="_blank" rel="noopener noreferrer" className="hover:text-[#FC8B32] text-zinc-900 dark:text-white font-semibold transition-colors">gaprio.in</a>
             </div>
+
+            {/* Social & Contact Links */}
+            <div className="flex items-center justify-center gap-6 mt-2 mb-2">
+              <a href="mailto:contact@gaprio.in" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#FC8B32] transition-colors" aria-label="Email Us">
+                <Mail className="w-5 h-5" />
+              </a>
+              <a href="https://twitter.com/gaprio" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#FC8B32] transition-colors" aria-label="Twitter">
+                <X className="w-5 h-5" />
+              </a>
+              <a href="https://linkedin.com/company/gaprio" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#FC8B32] transition-colors" aria-label="LinkedIn">
+                <BsLinkedin className="w-5 h-5" />
+              </a>
+              <a href="https://instagram.com/gaprio" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-[#FC8B32] transition-colors" aria-label="Instagram">
+                <BsInstagram className="w-5 h-5" />
+              </a>
+            </div>
+
             <p className="text-xs opacity-60">© 2026 Gaprio. All rights reserved.</p>
           </div>
         </footer>
