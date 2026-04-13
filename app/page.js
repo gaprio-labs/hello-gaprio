@@ -223,7 +223,7 @@ export default function Home() {
             <a href="/" className="block pointer-events-auto cursor-pointer">
               {/* Light Mode Logo */}
               <Image 
-                src="/img04.png" 
+                src="/logo001black.png" 
                 alt="Gaprio" 
                 width={180} 
                 height={48} 
@@ -232,7 +232,7 @@ export default function Home() {
               />
               {/* Dark Mode Logo */}
               <Image 
-                src="/logo2.png" 
+                src="/logo001white.png" 
                 alt="Gaprio" 
                 width={180} 
                 height={48} 
@@ -546,8 +546,8 @@ export default function Home() {
               {/* Brand Column */}
               <div className="md:col-span-5 lg:col-span-6 flex flex-col items-start text-left">
                 <a href="/" className="mb-6 block">
-                  <Image src="/img04.png" alt="Gaprio" width={160} height={40} className="block dark:hidden w-auto h-8 sm:h-9" priority />
-                  <Image src="/logo2.png" alt="Gaprio" width={160} height={40} className="hidden dark:block w-auto h-8 sm:h-9" priority />
+                  <Image src="/logo001black.png" alt="Gaprio" width={160} height={40} className="block dark:hidden w-auto h-8 sm:h-9" priority />
+                  <Image src="/logo001white.png" alt="Gaprio" width={160} height={40} className="hidden dark:block w-auto h-8 sm:h-9" priority />
                 </a>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-sm mb-8">
                   Gaprio acts as an interactive neural mesh that reads conversations, attends meetings, and always knows exactly what needs to happen next. The intelligence layer for your stack.
