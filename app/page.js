@@ -577,19 +577,19 @@ export default function Home() {
                     name="Hanu Shashwat" 
                     role="CEO" 
                     linkedin="https://www.linkedin.com/in/hanushashwat/"
-                    mail="hanushashwat733@gmail.com" 
+                    mail="hanu@gaprio.in" 
                   />
                   <TeamMember 
                     name="Eklak Alam" 
                     role="CTO" 
                     linkedin="http://linkedin.com/in/eklak-alam" 
-                    mail="eklakalam420@gmail.com" 
+                    mail="eklak@gaprio.in" 
                   />
                   <TeamMember 
                     name="Abhijeet" 
                     role="CAIO" 
                     linkedin="https://www.linkedin.com/in/abhx09/" 
-                    mail="abhx09.singh@gmail.com" 
+                    mail="abhijeet@gaprio.in" 
                   />
                 </ul>
                 </ul>
