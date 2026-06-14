@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ReactLenis } from "lenis/react";
 import { motion, useSpring } from "framer-motion";
 import { BsInstagram, BsLinkedin, BsTwitterX } from "react-icons/bs";
+import { getCalApi } from "@calcom/embed-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -24,12 +25,12 @@ const heroTools = [
   { id: 'miro', label: 'Miro', image: '/companylogo/miro.png', x: -170, y: -130, mobileX: -95, mobileY: -90, color: '#fbbf24' },
 ];
 
-// --- COMPONENTS ---
+// --- STATIC IMAGE COMPONENT ---
 function ImagePlaceholder({ src, alt = "Gaprio Visualization" }) {
   return (
     <div className="my-10 sm:my-14 flex flex-col items-center w-full scroll-reveal">
       {src ? (
-        <div className="w-full relative rounded-2xl overflow-hidden bg-transparent">
+        <div className="w-full relative rounded-2xl overflow-hidden bg-white/5 dark:bg-black/20 border border-zinc-200 dark:border-zinc-800/80 shadow-md">
           <Image 
             src={src} 
             alt={alt} 
@@ -41,7 +42,7 @@ function ImagePlaceholder({ src, alt = "Gaprio Visualization" }) {
           />
         </div>
       ) : (
-        <div className="w-full aspect-video relative overflow-hidden rounded-2xl bg-zinc-50/30 dark:bg-[#0a0a0a]/30 flex flex-col items-center justify-center">
+        <div className="w-full aspect-video relative overflow-hidden rounded-2xl bg-zinc-50/30 dark:bg-[#0a0a0a]/30 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800/80 shadow-md">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
         </div>
       )}
@@ -108,10 +109,9 @@ function DraggableNode({ tool, containerRef, isMobile }) {
         whileDrag={{ scale: 1.15, cursor: "grabbing", zIndex: 100 }}
         className="group absolute w-[60px] h-[60px] md:w-20 md:h-20 bg-white dark:bg-[#121212] rounded-2xl md:rounded-[1.5rem] flex flex-col items-center justify-center shadow-md dark:shadow-2xl z-20 border border-zinc-200 dark:border-white/5 backdrop-blur-md touch-none select-none overflow-hidden"
       >
-        {/* Glow Border on Hover */}
         <div className="absolute inset-0 rounded-2xl md:rounded-[1.5rem] bg-gradient-to-tr from-black/5 dark:from-white/5 to-transparent pointer-events-none" />
         <div
-          className="absolute inset-0 rounded-2xl md:rounded-[1.5rem]  transition-colors duration-300 pointer-events-none opacity-50"
+          className="absolute inset-0 rounded-2xl md:rounded-[1.5rem] transition-colors duration-300 pointer-events-none opacity-50"
           style={{ borderColor: tool.color + "60", color: tool.color }}
         />
 
@@ -134,8 +134,7 @@ function DraggableNode({ tool, containerRef, isMobile }) {
   );
 }
 
-// --- TEAM SOCIALS HELPER (UPGRADED UI) ---
-// --- TEAM SOCIALS HELPER (UPGRADED UI) ---
+// --- TEAM SOCIALS HELPER ---
 function TeamMember({ name, role, linkedin, mail }) {
   return (
     <li className="flex items-center justify-between group p-3 -mx-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 transition-all border border-transparent hover:border-zinc-200 dark:hover:border-white/10">
@@ -165,6 +164,19 @@ export default function Home() {
   const mapContainerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  // --- CAL.COM INITIALIZATION ---
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi();
+      cal("ui", {
+        theme: "auto",
+        styles: { branding: { brandColor: "#FC8B32" } },
+        hideEventTypeDetails: false,
+        layout: "month_view"
+      });
+    })();
+  }, []);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile(); 
@@ -172,24 +184,29 @@ export default function Home() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // --- CINEMATIC GSAP ANIMATIONS ---
   useEffect(() => {
     const ctx = gsap.context(() => {
+      // Hero Text - Super cinematic blur reveal
       gsap.fromTo(
         ".fade-up",
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: "power2.out", delay: 0.1 }
+        { y: 60, opacity: 0, filter: "blur(12px)" },
+        { y: 0, opacity: 1, filter: "blur(0px)", duration: 1.2, stagger: 0.15, ease: "power4.out", delay: 0.1 }
       );
 
+      // Scroll Reveal Elements
       const scrollElements = gsap.utils.toArray(".scroll-reveal");
       scrollElements.forEach((el) => {
         gsap.fromTo(
           el,
-          { y: 30, opacity: 0 },
+          { y: 40, opacity: 0, scale: 0.98, filter: "blur(6px)" },
           {
             y: 0,
             opacity: 1,
-            duration: 0.8,
-            ease: "power2.out",
+            scale: 1,
+            filter: "blur(0px)",
+            duration: 1,
+            ease: "power3.out",
             scrollTrigger: {
               trigger: el,
               start: "top 85%",
@@ -219,29 +236,10 @@ export default function Home() {
         {/* HEADER WRAPPER */}
         <div className="absolute top-0 left-0 w-full z-50 pt-8 sm:pt-10 pointer-events-none">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-            {/* Logo */}
             <a href="/" className="block pointer-events-auto cursor-pointer">
-              {/* Light Mode Logo */}
-              <Image 
-                src="/logo001black.png" 
-                alt="Gaprio" 
-                width={180} 
-                height={48} 
-                className="block dark:hidden w-auto h-9 sm:h-11" 
-                priority 
-              />
-              {/* Dark Mode Logo */}
-              <Image 
-                src="/logo001white.png" 
-                alt="Gaprio" 
-                width={180} 
-                height={48} 
-                className="hidden dark:block w-auto h-9 sm:h-11" 
-                priority 
-              />
+              <Image src="/logo001black.png" alt="Gaprio" width={180} height={48} className="block dark:hidden w-auto h-9 sm:h-11" priority />
+              <Image src="/logo001white.png" alt="Gaprio" width={180} height={48} className="hidden dark:block w-auto h-9 sm:h-11" priority />
             </a>
-            
-            {/* Theme Toggle */}
             <div className="pointer-events-auto cursor-pointer">
               <ThemeToggle />
             </div>
@@ -250,7 +248,6 @@ export default function Home() {
 
         <main className="relative z-10 pt-32 pb-24">
           
-          {/* Left-Aligned Hero Section */}
           <section className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-start text-left mb-16 sm:mb-20">
             <h1 className="flex flex-col items-start text-[clamp(1.5rem,7.5vw,3rem)] sm:text-5xl md:text-6xl font-semibold text-zinc-900 dark:text-white tracking-tighter sm:tracking-tight leading-[1.1] mb-6 sm:mb-8 fade-up w-full overflow-visible">
               <span className="block whitespace-nowrap">Stop managing your tools.</span>
@@ -270,7 +267,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Clean Narrative Container */}
           <section className="max-w-3xl mx-auto px-4 sm:px-6 text-base md:text-lg leading-[1.7] space-y-12">
             
             <div className="scroll-reveal">
@@ -279,46 +275,18 @@ export default function Home() {
                 We spent weeks going through forums, communities, and conversations with working professionals. Not to validate our idea. To understand the problem. What we heard was consistent, and it was human:
               </p>
 
-              {/* Interactive Social Proof Cards */}
               <div className="grid grid-cols-2 gap-3 sm:gap-5 mb-10">
                 {[
-                  {
-                    quote: "Devs side-slacking me... piecing it all together at 11pm.",
-                    subreddit: "r/projectmanagement",
-                    upvotes: "196",
-                    link: "https://www.reddit.com/r/projectmanagement/comments/1lzjqts/when_did_project_management_become_shouldering/" 
-                  },
-                  {
-                    quote: "The worst offender: just checking Slack/Email...",
-                    subreddit: "r/productivity",
-                    upvotes: "1.8k",
-                    link: "https://www.reddit.com/r/productivity/comments/1nwpxac/i_tracked_every_distraction_i_had_for_7_days_here/" 
-                  },
-                  {
-                    quote: "Busy for 8 hours but nothing meaningful gets done.",
-                    subreddit: "r/productivity",
-                    upvotes: "184",
-                    link: "https://www.reddit.com/r/productivity/comments/1obipxi/you_ever_have_a_day_where_youre_busy_for_8_hours/" 
-                  },
-                  {
-                    quote: "Tools running the team, not the other way around.",
-                    subreddit: "r/projectmanagement",
-                    upvotes: "77",
-                    link: "https://www.reddit.com/r/projectmanagement/comments/1l8rfav/is_anyone_else_lowkey_burned_out_on_toolfirst/" 
-                  }
+                  { quote: "Devs side-slacking me... piecing it all together at 11pm.", subreddit: "r/projectmanagement", upvotes: "196", link: "https://www.reddit.com/r/projectmanagement/comments/1lzjqts/when_did_project_management_become_shouldering/" },
+                  { quote: "The worst offender: just checking Slack/Email...", subreddit: "r/productivity", upvotes: "1.8k", link: "https://www.reddit.com/r/productivity/comments/1nwpxac/i_tracked_every_distraction_i_had_for_7_days_here/" },
+                  { quote: "Busy for 8 hours but nothing meaningful gets done.", subreddit: "r/productivity", upvotes: "184", link: "https://www.reddit.com/r/productivity/comments/1obipxi/you_ever_have_a_day_where_youre_busy_for_8_hours/" },
+                  { quote: "Tools running the team, not the other way around.", subreddit: "r/projectmanagement", upvotes: "77", link: "https://www.reddit.com/r/projectmanagement/comments/1l8rfav/is_anyone_else_lowkey_burned_out_on_toolfirst/" }
                 ].map((item, i) => (
-                  <div 
-                    key={i} 
-                    className="group relative p-3.5 sm:p-6 rounded-2xl bg-white dark:bg-[#0f0f0f] border border-zinc-200 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-[#FC8B32]/50 transition-all duration-300 overflow-hidden"
-                  >
+                  <div key={i} className="group relative p-3.5 sm:p-6 rounded-2xl bg-white dark:bg-[#0f0f0f] border border-zinc-200 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between hover:shadow-md hover:border-[#FC8B32]/50 transition-all duration-300 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-[#FC8B32]/0 to-[#FC8B32]/[0.03] dark:to-[#FC8B32]/[0.05] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
                     <div className="relative z-10 pt-2">
-                      <p className="text-[12px] sm:text-base font-medium text-zinc-800 dark:text-zinc-200 leading-snug sm:leading-relaxed mb-4 sm:mb-6">
-                        "{item.quote}"
-                      </p>
+                      <p className="text-[12px] sm:text-base font-medium text-zinc-800 dark:text-zinc-200 leading-snug sm:leading-relaxed mb-4 sm:mb-6">"{item.quote}"</p>
                     </div>
-                    
                     <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-2.5 pt-3 sm:pt-4 border-t border-zinc-100 dark:border-zinc-800/80">
                       <div className="flex items-center gap-1.5 sm:gap-2">
                         <div className="flex items-center justify-center w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-[#ff4500]/10 flex-shrink-0">
@@ -326,20 +294,13 @@ export default function Home() {
                         </div>
                         <span className="text-[9px] sm:text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400 truncate max-w-[90px] sm:max-w-none">{item.subreddit}</span>
                       </div>
-                      
                       <div className="flex items-center gap-2 sm:gap-4 w-full xl:w-auto justify-between xl:justify-end">
                         <div className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-zinc-600 dark:text-zinc-400">
                           <ArrowUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#ff4500]" />
                           {item.upvotes}
                         </div>
-                        <a 
-                          href={item.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-zinc-400 dark:text-zinc-500 hover:text-[#FC8B32] transition-colors relative z-20 cursor-pointer"
-                        >
-                          Learn more
-                          <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-zinc-400 dark:text-zinc-500 hover:text-[#FC8B32] transition-colors relative z-20 cursor-pointer">
+                          Learn more <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </a>
                       </div>
                     </div>
@@ -355,46 +316,22 @@ export default function Home() {
               </p>
             </div>
 
-            {/* REAL INTERACTIVE MAP (Map is transparent, cards have BG) */}
+            {/* REAL INTERACTIVE MAP */}
             <div className="my-10 sm:my-14 scroll-reveal">
-              <div
-                ref={mapContainerRef}
-                className="relative w-full h-[400px] md:h-[550px] flex items-center justify-center z-20 cursor-crosshair touch-none select-none overflow-hidden bg-transparent border-none"
-              >
-                {/* Central Hub */}
+              <div ref={mapContainerRef} className="relative w-full h-[400px] md:h-[550px] flex items-center justify-center z-20 cursor-crosshair touch-none select-none overflow-hidden bg-transparent border-none">
                 <div className="relative z-30 flex items-center justify-center pointer-events-none">
                   <div className="absolute w-28 h-28 md:w-40 md:h-40 bg-[#FC8B32]/20 blur-[40px] md:blur-[60px] rounded-full animate-pulse" />
-                  
                   <div className="relative w-20 h-20 md:w-28 md:h-28 bg-white dark:bg-[#0a0a0a] rounded-full border border-zinc-200 dark:border-zinc-800 shadow-[0_0_50px_-10px_rgba(252,139,50,0.3)] flex items-center justify-center ring-1 ring-zinc-100 dark:ring-white/10">
                     <div className="absolute inset-0 rounded-full border border-[#FC8B32]/30 animate-[ping_3s_linear_infinite]" />
                     <div className="absolute inset-2 md:inset-4 rounded-full border border-[#FC8B32]/20 animate-[ping_3s_linear_infinite_1s]" />
-                    
                     <div className="relative w-10 h-10 md:w-14 md:h-14">
-                      {/* Logo changes automatically by overriding via tailwind classes */}
-                      <Image
-                        src="/logo03.png"
-                        alt="Gaprio"
-                        fill
-                        className="object-contain block dark:hidden"
-                      />
-                      <Image
-                        src="/logo1.png"
-                        alt="Gaprio"
-                        fill
-                        className="object-contain hidden dark:block"
-                      />
+                      <Image src="/logo03.png" alt="Gaprio" fill className="object-contain block dark:hidden" />
+                      <Image src="/logo1.png" alt="Gaprio" fill className="object-contain hidden dark:block" />
                     </div>
                   </div>
                 </div>
-
-                {/* Render Interactive Nodes */}
                 {heroTools.map((tool) => (
-                  <DraggableNode
-                    key={tool.id}
-                    tool={tool}
-                    containerRef={mapContainerRef}
-                    isMobile={isMobile}
-                  />
+                  <DraggableNode key={tool.id} tool={tool} containerRef={mapContainerRef} isMobile={isMobile} />
                 ))}
               </div>
             </div>
@@ -444,15 +381,9 @@ export default function Home() {
                   "Proposal detected for Kapoor account. Should I create the task, assign it, and generate a first draft using your previous proposal as reference?"
                 </p>
                 <div className="flex flex-wrap gap-2.5 sm:gap-3">
-                  <button className="px-4 py-2 bg-[#FC8B32] text-white rounded-md text-sm font-medium hover:bg-[#e07a2a] transition-colors cursor-pointer">
-                    Approve
-                  </button>
-                  <button className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-md text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">
-                    Edit
-                  </button>
-                  <button className="px-4 py-2 bg-transparent text-zinc-500 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
-                    Dismiss
-                  </button>
+                  <button className="px-4 py-2 bg-[#FC8B32] text-white rounded-md text-sm font-medium hover:bg-[#e07a2a] transition-colors cursor-pointer">Approve</button>
+                  <button className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-md text-sm font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer">Edit</button>
+                  <button className="px-4 py-2 bg-transparent text-zinc-500 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">Dismiss</button>
                 </div>
               </div>
 
@@ -461,10 +392,7 @@ export default function Home() {
               </p>
             </div>
             
-            <ImagePlaceholder 
-              src="/img0003.png" 
-              alt="Gaprio execution comparison"
-            />
+            <ImagePlaceholder src="/img0003.png" alt="Gaprio execution comparison" />
 
             <div className="scroll-reveal">
               <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-4 mt-8">What Makes It Different</h2>
@@ -479,10 +407,7 @@ export default function Home() {
               </p>
             </div>
 
-            <ImagePlaceholder 
-              src="/img8.jpeg" 
-              alt="Gaprio dashboard screenshot"
-            />
+            <ImagePlaceholder src="/img8.jpeg" alt="Gaprio dashboard screenshot" />
 
             <div className="scroll-reveal">
               <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white mb-4 mt-8">Who This Is For</h2>
@@ -494,14 +419,11 @@ export default function Home() {
               </p>
             </div>
 
-            <ImagePlaceholder 
-              src="/img3.jpeg" 
-              alt="Gaprio phased vision timeline"
-            />
+            <ImagePlaceholder src="/img3.jpeg" alt="Gaprio phased vision timeline" />
 
           </section>
 
-          {/* NAKED CTA SECTION */}
+          {/* NAKED CTA SECTION WITH CAL.COM STRICT 30MIN EMBED */}
           <section className="max-w-3xl mx-auto px-4 sm:px-6 mt-20 sm:mt-24 scroll-reveal text-center relative z-10">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-4">
               What We're Asking
@@ -511,15 +433,16 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-              <a 
-                href="https://calendly.com/gaprio-management/30min" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#FC8B32] text-white px-8 py-3.5 rounded-xl text-base font-semibold hover:bg-[#e07a2a] transition-colors cursor-pointer"
+              {/* --- STRICT 30MIN FUNNEL --- */}
+              <button 
+                data-cal-link="gaprio-labs/30min"
+                data-cal-config='{"layout":"month_view"}'
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#FC8B32] text-white px-8 py-3.5 rounded-xl text-base font-semibold hover:bg-[#e07a2a] transition-colors cursor-pointer shadow-lg hover:shadow-[#FC8B32]/25"
               >
                 <Calendar className="w-5 h-5" />
-                Schedule 20-min call
-              </a>
+                Schedule a Call
+              </button>
+
               <a 
                 href="https://www.gaprio.in/waitlist" 
                 target="_blank" 
@@ -533,17 +456,14 @@ export default function Home() {
           </section>
         </main>
 
-        {/* --- PREMIUM SAAS FOOTER WITH ORANGE GLOW & BACK TO TOP --- */}
+        {/* --- PREMIUM SAAS FOOTER --- */}
         <footer className="relative z-10 border-t border-zinc-200 dark:border-zinc-800 bg-[#fafafa] dark:bg-[#050505] pt-16 pb-8 overflow-hidden">
           
-          {/* HUGE BOTTOM GRADIENT GLOW TO MATCH TOP */}
           <div className="absolute bottom-[-20%] left-[-10%] w-full max-w-[800px] h-[600px] bg-gradient-to-tr from-[#ff5e00] via-[#FC8B32]/30 to-transparent blur-[140px] rounded-full pointer-events-none z-0" />
           
           <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-            {/* Top Grid */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 mb-16">
               
-              {/* Brand Column */}
               <div className="md:col-span-5 lg:col-span-6 flex flex-col items-start text-left">
                 <a href="/" className="mb-6 block">
                   <Image src="/logo001black.png" alt="Gaprio" width={160} height={40} className="block dark:hidden w-auto h-8 sm:h-9" priority />
@@ -553,69 +473,46 @@ export default function Home() {
                   Gaprio acts as an interactive neural mesh that reads conversations, attends meetings, and always knows exactly what needs to happen next. The intelligence layer for your stack.
                 </p>
                 <div className="flex items-center gap-4">
-                  {/* <a href="https://twitter.com/gaprio" target="_blank" rel="noopener noreferrer" className="p-2 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-[#FC8B32] dark:hover:bg-[#FC8B32] hover:border-[#FC8B32] rounded-full transition-all duration-300 hover:-translate-y-0.5">
-                    <BsTwitterX className="w-4 h-4" />
-                  </a> */}
                   <a href="https://linkedin.com/company/gaprio" target="_blank" rel="noopener noreferrer" className="p-2 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-[#FC8B32] dark:hover:bg-[#FC8B32] hover:border-[#FC8B32] rounded-full transition-all duration-300 hover:-translate-y-0.5">
                     <BsLinkedin className="w-4 h-4" />
                   </a>
-                  {/* <a href="https://instagram.com/gaprio" target="_blank" rel="noopener noreferrer" className="p-2 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-[#FC8B32] dark:hover:bg-[#FC8B32] hover:border-[#FC8B32] rounded-full transition-all duration-300 hover:-translate-y-0.5">
-                    <BsInstagram className="w-4 h-4" />
-                  </a> */}
                   <a href="mailto:gaprio.management@gmail.com" className="p-2 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-[#FC8B32] dark:hover:bg-[#FC8B32] hover:border-[#FC8B32] rounded-full transition-all duration-300 hover:-translate-y-0.5">
                     <Mail className="w-4 h-4" />
                   </a>
                 </div>
               </div>
 
-              {/* Founding Team Column */}
               <div className="md:col-span-4 lg:col-span-3">
                 <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-6 uppercase tracking-widest">Founding Team</h4>
                 <ul className="space-y-2">
-                  <ul className="space-y-2">
-                  <TeamMember 
-                    name="Hanu Shashwat" 
-                    role="CEO" 
-                    linkedin="https://www.linkedin.com/in/hanushashwat/"
-                    mail="hanu@gaprio.in" 
-                  />
-                  <TeamMember 
-                    name="Eklak Alam" 
-                    role="CTO" 
-                    linkedin="http://linkedin.com/in/eklak-alam" 
-                    mail="eklak@gaprio.in" 
-                  />
-                  <TeamMember 
-                    name="Abhijeet" 
-                    role="CAIO" 
-                    linkedin="https://www.linkedin.com/in/abhx09/" 
-                    mail="abhijeet@gaprio.in" 
-                  />
-                </ul>
+                  <TeamMember name="Hanu Shashwat" role="CEO" linkedin="https://www.linkedin.com/in/hanushashwat/" mail="hanu@gaprio.in" />
+                  <TeamMember name="Eklak Alam" role="CTO" linkedin="http://linkedin.com/in/eklak-alam" mail="eklak@gaprio.in" />
+                  <TeamMember name="Abhijeet" role="CAIO" linkedin="https://www.linkedin.com/in/abhx09/" mail="abhijeet@gaprio.in" />
                 </ul>
               </div>
 
-              {/* Navigation Links Column */}
               <div className="md:col-span-3 lg:col-span-3">
                 <h4 className="text-xs font-bold text-zinc-900 dark:text-white mb-6 uppercase tracking-widest">Product</h4>
                 <ul className="space-y-3">
                   <li><a href="https://www.gaprio.in/waitlist" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-[#FC8B32] dark:hover:text-[#FC8B32] transition-colors cursor-pointer font-medium">Join Waitlist</a></li>
-                  <li><a href="https://calendly.com/gaprio-management/30min" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-[#FC8B32] dark:hover:text-[#FC8B32] transition-colors cursor-pointer font-medium">Schedule a Call</a></li>
-                  {/* Fixed the mailto link here */}
+                  {/* --- STRICT 30MIN FUNNEL IN FOOTER --- */}
+                  <li>
+                    <button 
+                      data-cal-link="gaprio-labs/30min"
+                      data-cal-config='{"layout":"month_view"}'
+                      className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-[#FC8B32] dark:hover:text-[#FC8B32] transition-colors cursor-pointer font-medium bg-transparent border-none p-0 text-left"
+                    >
+                      Schedule a Call
+                    </button>
+                  </li>
                   <li><a href="mailto:gaprio.management@gmail.com" className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-[#FC8B32] dark:hover:text-[#FC8B32] transition-colors cursor-pointer font-medium">Contact Us</a></li>
                 </ul>
               </div>
             </div>
             
-            {/* Bottom Bar with Back to Top */}
             <div className="border-t border-zinc-200 dark:border-zinc-800/60 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              
               <div className="flex items-center gap-4">
                 <p className="text-xs text-zinc-600 dark:text-zinc-500 font-medium">© 2026 Gaprio.</p>
-                {/* <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-[#0a0a0a] border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] text-zinc-700 dark:text-zinc-300 font-bold uppercase tracking-widest">Systems Operational</span>
-                </div> */}
               </div>
 
               <button 
@@ -626,7 +523,6 @@ export default function Home() {
                 <span className="text-[10px] font-bold uppercase tracking-widest">Back to top</span>
                 <ArrowUp className="w-3.5 h-3.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
-
             </div>
           </div>
         </footer>
